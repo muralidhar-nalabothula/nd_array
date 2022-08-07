@@ -179,6 +179,8 @@ void FUNCTION(matmul, TYPE_S) (const char TransA, const char TransB, const ARRAY
                                 ARRAY_T(TYPE_S) * nd_arr_C, const TYPE_L alpha, const TYPE_L beta, const ND_indices * A_idx,  \
                                                                         const ND_indices * B_idx,  const ND_indices * C_idx);
 
+void FUNCTION(sum, TYPE_S) (char * str_A, char * str_C, ARRAY_T(TYPE_S) * nd_arrA, ARRAY_T(TYPE_S) * nd_arrC, const TYPE_L alpha, const TYPE_L beta);
+
 void FUNCTION(einsum, TYPE_S) (char * einsum_indices, ARRAY_T(TYPE_S) * nd_arrA, ARRAY_T(TYPE_S) * nd_arrB, ARRAY_T(TYPE_S) * nd_arrC, \
                                                                                                 const TYPE_L alpha, const TYPE_L beta);
 #endif

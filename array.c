@@ -74,6 +74,7 @@ void FUNCTION(reshape, TYPE_S) (const ARRAY_T(TYPE_S) * nd_arr_in, ARRAY_T(TYPE_
     if (nd_arr_in->rank == NULL) error_msg("uninitialized input array for reshape function");
     if (nd_arr_out->rank == NULL) error_msg("uninitialized output array for reshape function");
     if (nd_arr_in->data == NULL) error_msg("NULL data array received for reshape function");
+    if (nd_arr_out->data != NULL) error_msg("Cannot pass array with data to reshape function. This leads to memory leak");
 
     nd_arr_out->owner = false ;
 
@@ -99,6 +100,7 @@ void FUNCTION(strip_dims, TYPE_S) (const ARRAY_T(TYPE_S) * nd_arr_in, const ND_i
     if (nd_arr_in->data == NULL) error_msg("NULL data array received for strip_dims function");
 
     if (nd_arr_out->rank == NULL) error_msg("uninitialized output array for strip_dims function");
+    if (nd_arr_out->data != NULL) error_msg("Cannot pass array with data to strip_dims function. This leads to memory leak");
 
     nd_arr_out->owner = false ;
 

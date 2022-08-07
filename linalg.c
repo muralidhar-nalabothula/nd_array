@@ -12,8 +12,10 @@ static void FUNCTION(to_tblis, TYPE_S)(const ARRAY_T(TYPE_S) * nd_arr_A, tblis_t
 static void FUNCTION(to_tblis_scaled, TYPE_S)(const ARRAY_T(TYPE_S) * nd_arr_A, tblis_tensor * A_arr, const TYPE_L alpha);
 static void check_string_dims(char * str_A, char * str_B, ND_indices * dims_A,  ND_indices * dims_B);
 static void check_all_indices(char * str_A, char * str_B);
-
-
+static void get_einsum_excluded_idxs(const char * str_A, const char* str_B, const char* str_C, char * out_str);
+static void check_str_char_unq(char * inp_str, char* err_msg);
+/****************************************************************************************************/
+                                /* BLAS and LAPACK based*/
 
 
 void FUNCTION(matmul, TYPE_S) (const char TransA, const char TransB, const ARRAY_T(TYPE_S) * nd_arr_A, const ARRAY_T(TYPE_S) * nd_arr_B, ARRAY_T(TYPE_S) * nd_arr_C,
@@ -123,11 +125,63 @@ void FUNCTION(matmul, TYPE_S) (const char TransA, const char TransB, const ARRAY
 }
 
 /****************************************************************************************************/
+                            /* TBLIS based*/
+
+/* Sum function*/
+void FUNCTION(sum, TYPE_S) (char * str_A, char * str_C, ARRAY_T(TYPE_S) * nd_arrA, ARRAY_T(TYPE_S) * nd_arrC, const TYPE_L alpha, const TYPE_L beta)
+{
+    //
+    tblis_tensor A_arr, C_arr ;
+
+    if (str_A == NULL || str_C == NULL) error_msg("sum function indices cannot take NULL pointer") ;
+
+    if (((nd_arrA->rank) == NULL )  || ((nd_arrC->rank) == NULL )) \
+                                        error_msg("Cannot accept uninitilized array in sum function") ; 
+    
+    if (((nd_arrA->data) == NULL ) || ((nd_arrC->data) == NULL )) \
+                        error_msg("Cannot accept NULL data array. allocate them beforing passing to sum function");
+
+    if ((strlen(str_A) != (nd_arrA->rank)[0]) || (strlen(str_C) != (nd_arrC->rank)[0])) \
+                            error_msg("Rank of input arrays doesn't match with given indices in sum function");
+
+    if (strlen(str_A) == (size_t)0) error_msg("Rank of input array for sum function cannot be 0.");
+
+    check_all_indices(str_A,str_C);//check if the final indices are present in input arrays
+    check_str_char_unq(str_C, "Cannot have identical indices in output subscripts in sum function");
+
+    check_string_dims(str_A, str_A, nd_arrA->dims, nd_arrA->dims); // check is repeated indices are consistant in same array
+    
+    check_string_dims(str_C, str_C, nd_arrC->dims, nd_arrC->dims);
+
+    check_string_dims(str_A, str_C, nd_arrA->dims, nd_arrC->dims); // check is repeated indices are consistant in other arrays
+    
+    //to_tblis_scaled
+    ND_FUNCTION_CALL(to_tblis_scaled, TYPE_S)(nd_arrA, &A_arr, alpha);
+
+    ND_FUNCTION_CALL(to_tblis_scaled, TYPE_S)(nd_arrC, &C_arr, beta);
+
+    tblis_tensor_add(NULL, NULL, &A_arr, str_A, &C_arr, str_C);
+    
+    //
+    nd_free_tblis(&A_arr);
+
+    nd_free_tblis(&C_arr);
+
+}
 
 
+/* Einsum function*/
 void FUNCTION(einsum, TYPE_S) (char * einsum_indices, ARRAY_T(TYPE_S) * nd_arrA, ARRAY_T(TYPE_S) * nd_arrB, ARRAY_T(TYPE_S) * nd_arrC, const TYPE_L alpha, const TYPE_L beta)
 {
     //
+
+    if (einsum_indices == NULL) error_msg("einsum indices cannot take NULL pointer") ;
+
+    if ( (((nd_arrA->rank) == NULL )  || ((nd_arrB->rank) == NULL )) || ((nd_arrC->rank) == NULL ) ) \
+                                                    error_msg("Cannot accept uninitilized array in einsum") ; 
+    
+    if ( (((nd_arrA->data) == NULL )  || ((nd_arrB->data) == NULL )) || ((nd_arrC->data) == NULL ) ) \
+                        error_msg("Cannot accept NULL data array. allocate them beforing passing to einsum");
     
     tblis_tensor A_arr, B_arr, C_arr ;
 
@@ -219,6 +273,7 @@ void FUNCTION(einsum, TYPE_S) (char * einsum_indices, ARRAY_T(TYPE_S) * nd_arrA,
     strcat(str_AB_cat,str_B);
 
     check_all_indices(str_AB_cat,str_C);//check if the final indices are present in input arrays
+    check_str_char_unq(str_C, "Cannot have identical indices in output subscripts in einsum function");
 
     check_string_dims(str_A, str_A, nd_arrA->dims, nd_arrA->dims); // check is repeated indices are consistant in same array
     check_string_dims(str_B, str_B, nd_arrB->dims, nd_arrB->dims);
@@ -227,8 +282,6 @@ void FUNCTION(einsum, TYPE_S) (char * einsum_indices, ARRAY_T(TYPE_S) * nd_arrA,
     check_string_dims(str_A, str_B, nd_arrA->dims, nd_arrB->dims); // check is repeated indices are consistant in other arrays
     check_string_dims(str_A, str_C, nd_arrA->dims, nd_arrC->dims);
     check_string_dims(str_B, str_C, nd_arrB->dims, nd_arrC->dims);
-
-    
 
     //to_tblis_scaled
     if (  ND_FUNCTION_CALL(size, TYPE_S) (nd_arrA)  < ND_FUNCTION_CALL(size, TYPE_S) (nd_arrB) )
@@ -241,19 +294,86 @@ void FUNCTION(einsum, TYPE_S) (char * einsum_indices, ARRAY_T(TYPE_S) * nd_arrA,
         ND_FUNCTION_CALL(to_tblis, TYPE_S)(nd_arrA, &A_arr);
         ND_FUNCTION_CALL(to_tblis_scaled, TYPE_S)(nd_arrB, &B_arr, alpha);
     }
-    //
-    if (  strlen(str_C) == (size_t)0  )
-    {
-        tblis_scalar C_scalar ;
-        TBLIS_CALL(init_scalar,TYPE_S)(&C_scalar, (TYPE_L)0.0f);
-        tblis_tensor_dot(NULL, NULL,&A_arr, str_A, &B_arr, str_B, &C_scalar);
-        (nd_arrC->data)[0] = beta*(nd_arrC->data)[0] + C_scalar.data.TYPE_S  ;
+
+    ND_FUNCTION_CALL(to_tblis_scaled, TYPE_S)(nd_arrC, &C_arr, beta);
+
+    /* 
+        Find the indices of final array which contracted but only present in one array 
+        for ex ijk, ijl ->ij k and l are contracted but only present in one array. 
+        This is because, einsum only contracts correctly when contracted indices are present on both inputs.
+    */
+    
+    get_einsum_excluded_idxs(str_A, str_B, str_C, str_AB_cat); // now str_AB_cat is used to ger missing indices
+
+    if (strlen(str_AB_cat) == 0)
+    {   /* Don only einsum if the str_AB_cat is empty */
+        tblis_tensor_mult(NULL, NULL, &A_arr, str_A, &B_arr, str_B, &C_arr, str_C);
     }
-    //
     else
     {
-        ND_FUNCTION_CALL(to_tblis_scaled, TYPE_S)(nd_arrC, &C_arr, beta);
-        tblis_tensor_mult(NULL, NULL, &A_arr, str_A, &B_arr, str_B, &C_arr, str_C);
+        /* do einsum + reduction*/
+        /*
+            Get the dims of str_AB_cat indices -> create memory -> einsum -> add -> free
+        */
+
+        char * einsum_dummy_str = malloc(sizeof(char) * 2*400);
+
+        strcpy(einsum_dummy_str,str_C);
+
+        strcat(einsum_dummy_str,str_AB_cat);
+
+        /* get the dimensions of the array of the indices in einsum_dummy_str */
+        ND_indices C_temp_rank = (ND_indices) strlen(einsum_dummy_str);
+
+        ND_indices * C_temp_dims = malloc(C_temp_rank * sizeof(ND_indices));
+
+        // get the dimensions;
+
+        size_t str_len_A , str_len_B ; 
+
+        str_len_A = strlen(str_A);
+        str_len_B = strlen(str_B);
+
+        for (size_t i_count =0 ; i_count < C_temp_rank ; ++i_count )
+        {
+            for (size_t j_count =0; j_count <str_len_A ; ++j_count )
+            {
+                if ( str_A[j_count] == einsum_dummy_str[i_count]  ) C_temp_dims[i_count] = (nd_arrA->dims)[j_count] ; 
+            }
+
+            for (size_t j_count =0; j_count <str_len_B ; ++j_count )
+            {
+                if ( str_B[j_count] == einsum_dummy_str[i_count]  ) C_temp_dims[i_count] = (nd_arrB->dims)[j_count] ; 
+            }
+
+        }
+
+        ARRAY_T(TYPE_S) nd_C_temp ; 
+
+        tblis_tensor C_temp_blis;
+
+        ND_FUNCTION_CALL(init, TYPE_S) (&nd_C_temp, C_temp_rank, C_temp_dims); // initiate temp array
+
+        ND_FUNCTION_CALL(malloc, TYPE_S) (&nd_C_temp); // allocate memory
+
+        ND_FUNCTION_CALL(set_all, TYPE_S) (&nd_C_temp,  (TYPE_L) 0.0f ); // set all elements to zero
+
+        ND_FUNCTION_CALL(to_tblis, TYPE_S)(&nd_C_temp, &C_temp_blis);   // map to tblis tensor object
+        
+        tblis_tensor_mult(NULL, NULL, &A_arr, str_A, &B_arr, str_B, &C_temp_blis, einsum_dummy_str); // einsum first
+
+        tblis_tensor_add(NULL, NULL, &C_temp_blis, einsum_dummy_str, &C_arr, str_C); // contraction
+
+        nd_free_tblis(&C_temp_blis);    // free tblis tensor object
+
+        ND_FUNCTION_CALL(free, TYPE_S) (&nd_C_temp); // free the memory
+
+        ND_FUNCTION_CALL(uninit, TYPE_S) (&nd_C_temp); //initiate temp array
+
+        free(C_temp_dims);
+
+        free(einsum_dummy_str);
+
     }
 
     //
@@ -261,7 +381,7 @@ void FUNCTION(einsum, TYPE_S) (char * einsum_indices, ARRAY_T(TYPE_S) * nd_arrA,
     nd_free_tblis(&A_arr);
     nd_free_tblis(&B_arr);
 
-    if ( strlen(str_C) != (size_t)0 ) nd_free_tblis(&C_arr);
+    nd_free_tblis(&C_arr);
 
 }
 
@@ -328,6 +448,84 @@ static void check_all_indices(char * str_A, char * str_B)
     }
 
 }
+
+/* FUnction to check if there is any repeatition in output indices*/
+static void check_str_char_unq(char * inp_str, char* err_msg)
+{
+    int freq[256];
+    
+    for (size_t i =0; i<256; ++i) freq[i] = 0 ;
+
+    int ascii_to_int ;
+
+    size_t str_len = strlen(inp_str);
+
+    for (size_t i =0; i<str_len; ++i)
+    {
+        ascii_to_int = (int) inp_str[i];
+
+        if (freq[ascii_to_int]>0) error_msg(err_msg) ; //"Cannot have identical indices in output subscripts");
+
+        else ++freq[ascii_to_int];
+    }
+}
+
+static void get_einsum_excluded_idxs(const char * str_A, const char* str_B, const char* str_C, char * out_str)
+{   /* The function computes elements that are present in one string but not in other.
+        length of out_str is set to  str_A + str_B+ str_C + 1 to be safe. These indices must
+        be appended to einsum output indices and later contract them */
+    
+    //
+    int freqA[256];
+    int freqB[256];
+    int freqC[256];
+
+    
+    for (size_t i =0; i<256; ++i) freqA[i] = 0 ;
+    for (size_t i =0; i<256; ++i) freqB[i] = 0 ;
+    for (size_t i =0; i<256; ++i) freqC[i] = 0 ;
+
+    int ascii_to_int ;
+
+    size_t str_lenA = strlen(str_A);
+    size_t str_lenB = strlen(str_B);
+    size_t str_lenC = strlen(str_C);
+
+    for (size_t i =0; i<str_lenA; ++i)
+    {
+        ascii_to_int = (int) str_A[i];
+
+        freqA[ascii_to_int]++;
+    }
+
+    for (size_t i =0; i<str_lenB; ++i)
+    {
+        ascii_to_int = (int) str_B[i];
+
+        freqB[ascii_to_int]++;
+    }
+
+    for (size_t i =0; i<str_lenC; ++i)
+    {
+        ascii_to_int = (int) str_C[i];
+
+        freqC[ascii_to_int]++;
+    }
+
+    size_t str_counter = 0 ;
+
+    for (int i =0; i<256; ++i)
+    {
+        if ( ((freqA[i] >0 && freqB[i] ==0 ) || ( freqA[i] == 0 && freqB[i] >0  )) && (freqC[i] == 0) )
+        {   
+            out_str[str_counter] = (char) i ; 
+            str_counter++ ; 
+        }
+    }
+    out_str[str_counter] = '\0' ; 
+
+}
+
 
 /* Convert nd_array to tblis array*/
 static void FUNCTION(to_tblis, TYPE_S)(const ARRAY_T(TYPE_S) * nd_arr_A, tblis_tensor * A_arr)
