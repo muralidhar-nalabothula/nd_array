@@ -29,21 +29,36 @@ int main(void)
 
     nd_arr_c read_arr, write_arr; 
 
+    struct timespec start, finish, delta; // timing vars
+
+    clock_gettime(CLOCK_REALTIME, &start);
 
     /*  TEST-1  */
     printf("*************** Running Test-1 ................................ \n");
     nd_init_c(&read_arr, 0, NULL);
 
-    nd_read_c("/Users/murali/phd/one_phonon_raman/si/bse/si_data/nscf_wo/raman/ndb.BS_elph", "exc_elph", &read_arr);
+    nd_read_c("nc.temp", "exc_elph", &read_arr);
 
     nd_init_c(&write_arr, *(read_arr.rank), read_arr.dims);
     
     nd_malloc_c(&write_arr);
+    
+    clock_gettime(CLOCK_REALTIME, &finish); //timing end:
+    sub_timespec(start, finish, &delta); // timing end:
+    printf("Time taken for run : %d.%.9ld\n", (int)delta.tv_sec, delta.tv_nsec);
+
+    clock_gettime(CLOCK_REALTIME, &start);
+
 
     nd_copy_c(&read_arr,&write_arr);
 
-    nd_write_c("nc.temp", "exc_elph", &write_arr, (char * [4]) {"nq", "modes", "Sf", "Si"});    
+    nd_write_c("nc.temp2", "exc_elph", &write_arr, (char * [4]) {"nq", "modes", "Sf", "Si"});    
+    
+    clock_gettime(CLOCK_REALTIME, &finish); //timing end:
+    sub_timespec(start, finish, &delta); // timing end:
+    printf("Time taken for run : %d.%.9ld\n", (int)delta.tv_sec, delta.tv_nsec);
 
+    clock_gettime(CLOCK_REALTIME, &start);
     printf("*************** Running Test-2 ................................ \n");
 
     /*  TEST-2  */
@@ -57,6 +72,11 @@ int main(void)
     printf("%10e + %10ej \n", (double) crealf(element),(double) cimagf(element));
 
      /*  TEST-3  */
+    clock_gettime(CLOCK_REALTIME, &finish); //timing end:
+    sub_timespec(start, finish, &delta); // timing end:
+    printf("Time taken for run : %d.%.9ld\n", (int)delta.tv_sec, delta.tv_nsec);
+
+    clock_gettime(CLOCK_REALTIME, &start);
 
     printf("*************** Running Test-3 ................................ \n");
     nd_arr_c reshaped_arr, transpose_arr, sliced_arr, stripped_arr;
@@ -92,11 +112,16 @@ int main(void)
     element = *nd_ele_c(&stripped_arr, nd_idx{13,5});
     printf("Stripped element : %10e + %10ej \n", (double) crealf(element),(double) cimagf(element));
     //
-    
+    clock_gettime(CLOCK_REALTIME, &finish); //timing end:
+    sub_timespec(start, finish, &delta); // timing end:
+    printf("Time taken for run : %d.%.9ld\n", (int)delta.tv_sec, delta.tv_nsec);
+
+    clock_gettime(CLOCK_REALTIME, &start);
+ 
      /*  TEST-4  */
-    
+    //clock_gettime(CLOCK_REALTIME, &start);
     printf("*************** Running Test-4 ................................ \n");
-    nd_arr_c mat_prod, einsum_test;
+    nd_arr_c mat_prod, einsum_test, sum_test, einsum_test2;
 
     nd_init_c(&mat_prod,(ND_indices)2, write_arr.dims+2 );
     nd_malloc_c(&mat_prod);
@@ -111,12 +136,31 @@ int main(void)
     nd_malloc_c(&einsum_test);
 
     nd_set_all_c(&einsum_test, 0.0f + 0.0f*I);
-    nd_einsum_c("ijkk,ijlk->ijx",&write_arr,&write_arr,&einsum_test,1.0f + 0.0f*I, 0.0f + 0.0f*I);
+    nd_einsum_c("ijkk,ijlk->ijl",&write_arr,&write_arr,&einsum_test,1.0f + 0.0f*I, 0.0f + 0.0f*I);
 
     element = *nd_ele_c(&einsum_test, nd_idx{0,2,473});
     printf("Einsum element : %10e + %10ej \n", (double) crealf(element),(double) cimagf(element));
 
+    nd_init_c(&einsum_test2,0,NULL);
+    nd_init_c(&sum_test,0,NULL);
+    
+    nd_malloc_c(&sum_test);
+    nd_malloc_c(&einsum_test2);
 
+    nd_set_all_c(&einsum_test2, 0.0f + 0.0f*I);
+    nd_set_all_c(&sum_test, 0.0f + 0.0f*I);
+
+    nd_einsum_c("ijkx,ijky->",&write_arr,&write_arr,&einsum_test2,1.0f + 0.0f*I, 0.0f + 0.0f*I);
+    nd_sum_c("ijl","",&einsum_test,&sum_test,1.0f + 0.0f*I, 0.0f + 0.0f*I);
+
+    element = *nd_ele_c(&einsum_test2, nd_idx{0});
+    printf("Einsum element 2 : %10e + %10ej \n", (double) crealf(element),(double) cimagf(element));
+    //
+    element = *nd_ele_c(&sum_test, nd_idx{0});
+    printf("Sum element : %10e + %10ej \n", (double) crealf(element),(double) cimagf(element));
+
+    nd_free_c(&sum_test);
+    nd_free_c(&einsum_test2);
     nd_free_c(&mat_prod);
     nd_free_c(&einsum_test);
     nd_free_c(&read_arr);
@@ -124,6 +168,8 @@ int main(void)
     nd_free_c(&transpose_arr);
     nd_free_c(&sliced_arr);
 
+    nd_uninit_c(&sum_test);
+    nd_uninit_c(&einsum_test2);
     nd_uninit_c(&mat_prod);
     nd_uninit_c(&einsum_test);
     nd_uninit_c(&reshaped_arr);
@@ -133,6 +179,10 @@ int main(void)
     nd_uninit_c(&read_arr);
     nd_uninit_c(&write_arr);
 
+    clock_gettime(CLOCK_REALTIME, &finish); //timing end:
+    sub_timespec(start, finish, &delta); // timing end:
+    printf("Time taken for run : %d.%.9ld\n", (int)delta.tv_sec, delta.tv_nsec);
+    
     printf(" ************** All Test Sucessfull :) *************** \n");
 
 }
