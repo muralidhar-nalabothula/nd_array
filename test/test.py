@@ -1,10 +1,12 @@
 from netCDF4 import Dataset
 import numpy as np
+from time import time
+
 np.set_printoptions(suppress=False)
 
-file_path_original = '/Users/murali/phd/one_phonon_raman/si/bse/si_data/nscf_wo/raman/ndb.BS_elph'
+file_path_original = 'nc.temp'
 
-file_path_test = 'nc.temp'
+file_path_test = 'nc.temp2'
 
 def get_data(filename):
     db = Dataset(filename)
@@ -13,13 +15,22 @@ def get_data(filename):
     return db[...,0] + 1j*db[...,1]
 
 
+time1 = time()
+
 original = get_data(file_path_original)
 test = get_data(file_path_test)
 
+print('\n ********* Time : ',time()-time1, '*********** \n')
 print(np.allclose(test,original))
+
+time1 = time()
+#time1 = time()
 print(test.ravel().shape[0])
 print("{:e}".format(test[0,2,999,999]))
 print("{:e}".format(test[0,1,348,749]))
+
+print('\n ********* Time : ',time()-time1, '*********** \n')
+time1 = time()
 
 reshaped = test.reshape(6,500,2,125,4)
 print('Reshape: {:e}'.format(reshaped[3,127,1,73,2]))
@@ -34,6 +45,9 @@ print('Sliced: {:e}'.format(sliced_arr[1,0,37,7]))
 stripped_arr = sliced_arr[1,0,:,:]
 print('Stripped: {:e}'.format(stripped_arr[13,5]))
 
+print('\n ********* Time : ',time()-time1, '*********** \n')
+time1 = time()
+
 matmul = test[0,1,:,:].T@np.conj(test[0,2,:,:].T)
 einsum= np.einsum("ijkk,ijlk->ijl",test,test)
 
@@ -41,3 +55,4 @@ einsum= np.einsum("ijkk,ijlk->ijl",test,test)
 
 print('matmul: {:e}'.format(matmul[239,739]))
 print('einsum: {:e}'.format(einsum[0,2,473]))
+print('\n ********* Time : ',time()-time1, '*********** \n')
