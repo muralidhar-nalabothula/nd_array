@@ -26,7 +26,8 @@
 typedef int BLAS_INT; /* Internal type used for blas indices. set this according to the blas library (32 or 64 bit) */
 typedef size_t ND_indices; /* type used for all indices internally. */
 #define nd_idx (ND_indices []) /* macro for giving indices to functions*/
-
+#define ND_ALL ((void *)0)
+#define ND_END 0
 
 // #define ERR(e) {printf("Error: %s\n", nc_strerror(e)); exit(EXIT_FAILURE);}
 #include "nd_ulit.h"

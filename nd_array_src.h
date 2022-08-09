@@ -38,7 +38,7 @@
 typedef int BLAS_INT; /* Internal type used for blas indices. set this according to the blas library (32 or 64 bit) */
 typedef size_t ND_indices; /* type used for all indices internally. */
 #define nd_idx (ND_indices []) /* macro for giving indices to functions*/
-
+#define ND_ALL ((void *)0)
 
 
 #define ERR(e) {printf("Error: %s\n", nc_strerror(e)); exit(EXIT_FAILURE);}
@@ -55,9 +55,6 @@ typedef size_t ND_indices; /* type used for all indices internally. */
 
 #define ND_FUNCTION_CALL(FUN_NAME, TYPE_SMALL)         ND_FUNCTION_CALL_HIDDEN(FUN_NAME, TYPE_SMALL)
 #define ND_FUNCTION_CALL_HIDDEN(FUN_NAME, TYPE_SMALL)  nd_ ## FUN_NAME ## _ ## TYPE_SMALL
-
-#define NetCDF_FUNCTION_CALL(FUN_NAME, TYPE_LARGE)         NetCDF_FUNCTION_CALL_HIDDEN(FUN_NAME, TYPE_LARGE)
-#define NetCDF_FUNCTION_CALL_HIDDEN(FUN_NAME, TYPE_LARGE)  FUN_NAME ## _ ## TYPE_LARGE
 
 #define BLAS_CALL(FUN_NAME, TYPE_SMALL)         BLAS_CALL_HIDDEN(FUN_NAME, TYPE_SMALL)
 #define BLAS_CALL_HIDDEN(FUN_NAME, TYPE_SMALL)  cblas_ ## TYPE_SMALL ## FUN_NAME
@@ -167,8 +164,9 @@ void FUNCTION(copy, TYPE_S) (const ARRAY_T(TYPE_S) * nd_arr_in, ARRAY_T(TYPE_S) 
 
 void FUNCTION(read, TYPE_S) (const char* file_name, const char* var_name, ARRAY_T(TYPE_S) * nd_arr_in);
 
-void FUNCTION(write, TYPE_S) (const char* file_name, const char* var_name, const ARRAY_T(TYPE_S) * nd_arr_in, char ** dim_names);
+void FUNCTION(read_sub, TYPE_S) (const char* file_name, const char* var_name, ARRAY_T(TYPE_S) * nd_arr_in, ...);
 
+void FUNCTION(write, TYPE_S) (const char* file_name, const char* var_name, const ARRAY_T(TYPE_S) * nd_arr_in, char ** dim_names);
 
 /*************************************************** linalg.c functions **********************************************************/
 /*********************************************************************************************************************************/
