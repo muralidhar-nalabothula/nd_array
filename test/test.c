@@ -27,7 +27,7 @@ int main(void)
 {
     /* test alloc.c*/ //init, uninit, malloc, calloc, free, init_tranpose, init_slice, init_strip_dims
 
-    nd_arr_c read_arr, write_arr; 
+    nd_arr_c read_arr, write_arr, read_sub_arr; 
 
     struct timespec start, finish, delta; // timing vars
 
@@ -36,9 +36,11 @@ int main(void)
     /*  TEST-1  */
     printf("*************** Running Test-1 ................................ \n");
     nd_init_c(&read_arr, 0, NULL);
+    nd_init_c(&read_sub_arr, 0, NULL);
 
     nd_read_c("nc.temp", "exc_elph", &read_arr);
-
+    nd_read_sub_c("nc.temp", "exc_elph", &read_sub_arr, ND_ALL, nd_idx{1,3,1}, nd_idx{173,356,7}, nd_idx{324,894,9} ); //nd_idx{0,ND_END,1}, nd_idx{0,ND_END,1},nd_idx{0,ND_END,1}  );
+    //:,1:3,173:356:7, 324:894:9
     nd_init_c(&write_arr, *(read_arr.rank), read_arr.dims);
     
     nd_malloc_c(&write_arr);
@@ -52,8 +54,9 @@ int main(void)
 
     nd_copy_c(&read_arr,&write_arr);
 
-    nd_write_c("nc.temp2", "exc_elph", &write_arr, (char * [4]) {"nq", "modes", "Sf", "Si"});    
-    
+    nd_write_c("nc.temp2", "exc_elph", &write_arr, (char * [4]) {"nq", "modes", "Sf", "Si"});  
+    nd_write_c("nc.temp_sub", "exc_elph", &read_sub_arr, (char * [4]) {"nq", "modes", "Sf", "Si"});   
+    //:, 1:2:5, 13:23:3, 17: 64:1
     clock_gettime(CLOCK_REALTIME, &finish); //timing end:
     sub_timespec(start, finish, &delta); // timing end:
     printf("Time taken for run : %d.%.9ld\n", (int)delta.tv_sec, delta.tv_nsec);
@@ -167,7 +170,9 @@ int main(void)
     nd_free_c(&write_arr);
     nd_free_c(&transpose_arr);
     nd_free_c(&sliced_arr);
+    nd_free_c(&read_sub_arr);
 
+    nd_uninit_c(&read_sub_arr);
     nd_uninit_c(&sum_test);
     nd_uninit_c(&einsum_test2);
     nd_uninit_c(&mat_prod);

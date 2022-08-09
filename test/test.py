@@ -8,6 +8,8 @@ file_path_original = 'nc.temp'
 
 file_path_test = 'nc.temp2'
 
+file_path_test_sub = 'nc.temp_sub'
+
 def get_data(filename):
     db = Dataset(filename)
     db.set_always_mask(False)
@@ -20,8 +22,13 @@ time1 = time()
 original = get_data(file_path_original)
 test = get_data(file_path_test)
 
+test_sub =get_data(file_path_test_sub)
+original_sub = original[:,1:3,173:356:7, 324:894:9]#[:, 1:2:5, 13:23:3, 17: 64:1]
+#print(original_sub.shape)
+
 print('\n ********* Time : ',time()-time1, '*********** \n')
 print(np.allclose(test,original))
+print(np.allclose(original_sub,test_sub))
 
 time1 = time()
 #time1 = time()
