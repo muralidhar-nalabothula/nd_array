@@ -171,7 +171,7 @@ void FUNCTION(write, TYPE_S) (const char* file_name, const char* var_name, const
 /*************************************************** linalg.c functions **********************************************************/
 /*********************************************************************************************************************************/
 
-#if defined(COMPILE_ND_DOUBLE_COMPLEX) || defined(COMPILE_ND_SINGLE_COMPLEX) || defined(COMPILE_ND_SINGLE_FLOAT) || defined(COMPILE_ND_DOUBLE)
+#if defined(COMPILE_ND_DOUBLE_COMPLEX) || defined(COMPILE_ND_SINGLE_COMPLEX) || defined(COMPILE_ND_FLOAT) || defined(COMPILE_ND_DOUBLE)
 
 void FUNCTION(matmul, TYPE_S) (const char TransA, const char TransB, const ARRAY_T(TYPE_S) * nd_arr_A, const ARRAY_T(TYPE_S) * nd_arr_B, \
                                 ARRAY_T(TYPE_S) * nd_arr_C, const TYPE_L alpha, const TYPE_L beta, const ND_indices * A_idx,  \
