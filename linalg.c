@@ -4,7 +4,7 @@
 /* Linear algebra function (blas, tblis, lapack ...)*/
 /****************************************************************************************************/
 
-#if defined(COMPILE_ND_DOUBLE_COMPLEX) || defined(COMPILE_ND_SINGLE_COMPLEX) || defined(COMPILE_ND_SINGLE_FLOAT) || defined(COMPILE_ND_DOUBLE)
+#if defined(COMPILE_ND_DOUBLE_COMPLEX) || defined(COMPILE_ND_SINGLE_COMPLEX) || defined(COMPILE_ND_FLOAT) || defined(COMPILE_ND_DOUBLE)
 
 static CBLAS_TRANSPOSE get_gemmn_T(char Trans);
 static void nd_free_tblis(tblis_tensor * A_arr);
