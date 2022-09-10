@@ -65,31 +65,31 @@ typedef size_t ND_indices; /* type used for all indices internally. */
 
 #if defined(COMPILE_ND_FLOAT)
     #define TYPE_S s    /* */
-    typedef float TYPE_L ; /* type */
+    #define TYPE_L float /* type */
     #define NetCDF_IO_TYPE NC_FLOAT
     #define NetCDF_FUN_TYPE float
 
 #elif defined(COMPILE_ND_DOUBLE)
     #define TYPE_S d    /* */
-    typedef double TYPE_L ; /* type */
+    #define TYPE_L double /* type */
     #define NetCDF_IO_TYPE NC_DOUBLE
     #define NetCDF_FUN_TYPE double
 
 #elif defined(COMPILE_ND_SINGLE_COMPLEX)
     #define TYPE_S c    /* */
-    typedef float complex TYPE_L ; /* type */
+    #define TYPE_L float complex /* type */
     #define NetCDF_IO_TYPE NC_FLOAT
     #define NetCDF_FUN_TYPE float
 
 #elif defined(COMPILE_ND_DOUBLE_COMPLEX)
     #define TYPE_S z    /* */
-    typedef double complex TYPE_L ; /* type */
+    #define TYPE_L double complex /* type */
     #define NetCDF_IO_TYPE NC_DOUBLE
     #define NetCDF_FUN_TYPE double
 
 #elif defined(COMPILE_ND_INT)
     #define TYPE_S i    /* */
-    typedef int TYPE_L ; /* type */
+    #define TYPE_L int /* type */
     #define NetCDF_IO_TYPE NC_INT
     #define NetCDF_FUN_TYPE int
 
