@@ -10,5 +10,4 @@ TODO:
 1) Math functions
 2) Other important BLAS functions
 3) LAPACK
-4) MPI BLAS
-5) MPI LAPACK
+
