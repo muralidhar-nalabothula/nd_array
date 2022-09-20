@@ -204,7 +204,7 @@ void FUNCTION(read_sub, TYPE_S) (const char* file_name, const char* var_name, AR
 
 
 /* Function to write to netCDF */
-void FUNCTION(write, TYPE_S) (const char* file_name, const char* var_name, const ARRAY_T(TYPE_S) * nd_arr_in, char ** dim_names)
+void FUNCTION(write, TYPE_S) (const char* file_name, const char* var_name, const ARRAY_T(TYPE_S) * nd_arr_in, char ** dim_names, size_t * chunksize)
 {
     /* Dumps the ARRAY_T(TYPE_S) to file with filemane (file_name) and dimenstion name (dim_names)
         varible names
@@ -218,7 +218,7 @@ void FUNCTION(write, TYPE_S) (const char* file_name, const char* var_name, const
 
     int ncid, varid; // var iDs
 
-    if ((retval = nc_create(file_name, NC_CLOBBER , &ncid))) ERR(retval); // create file
+    if ((retval = nc_create(file_name, NC_CLOBBER | NC_NETCDF4 , &ncid))) ERR(retval); // create file
 
     #if defined(COMPILE_ND_DOUBLE_COMPLEX) || defined(COMPILE_ND_SINGLE_COMPLEX)
 
@@ -246,6 +246,17 @@ void FUNCTION(write, TYPE_S) (const char* file_name, const char* var_name, const
     if ((retval = nc_def_var(ncid, var_name, NetCDF_IO_TYPE, (int) (*(nd_arr_in->rank)), dimids, &varid))) ERR(retval); // Writing the data with name Raman_tensor
     
     #endif
+
+    // Set chunking if there
+    if (chunksize == NULL)
+    {
+        if ((retval = nc_def_var_chunking(ncid, varid, NC_CONTIGUOUS, NULL))) ERR(retval);
+    }
+    else
+    {
+        if ((retval = nc_def_var_chunking(ncid, varid, NC_CHUNKED, chunksize))) ERR(retval);
+    }
+    
 
     if ((retval = nc_enddef(ncid))) ERR(retval);
 

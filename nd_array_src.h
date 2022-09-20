@@ -166,7 +166,7 @@ void FUNCTION(read, TYPE_S) (const char* file_name, const char* var_name, ARRAY_
 
 void FUNCTION(read_sub, TYPE_S) (const char* file_name, const char* var_name, ARRAY_T(TYPE_S) * nd_arr_in, ...);
 
-void FUNCTION(write, TYPE_S) (const char* file_name, const char* var_name, const ARRAY_T(TYPE_S) * nd_arr_in, char ** dim_names);
+void FUNCTION(write, TYPE_S) (const char* file_name, const char* var_name, const ARRAY_T(TYPE_S) * nd_arr_in, char ** dim_names, size_t * chunksize);
 
 /*************************************************** linalg.c functions **********************************************************/
 /*********************************************************************************************************************************/

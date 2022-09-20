@@ -54,8 +54,8 @@ int main(void)
 
     nd_copy_s(&read_arr,&write_arr);
 
-    nd_write_s("nc.temp_2s", "exc_elph", &write_arr, (char * []) {"nq", "modes", "Sf", "Si", "re_im"});  
-    nd_write_s("nc.temp_2ssub", "exc_elph", &read_sub_arr, (char * []) {"nq", "modes", "Sf", "Si", "re_im"});   
+    nd_write_s("nc.temp_2s", "exc_elph", &write_arr, (char * []) {"nq", "modes", "Sf", "Si", "re_im"},(size_t[]){ 1,1,512,512,2});  
+    nd_write_s("nc.temp_2ssub", "exc_elph", &read_sub_arr, (char * []) {"nq", "modes", "Sf", "Si", "re_im"},NULL);   
     //:, 1:2:5, 13:23:3, 17: 64:1
     clock_gettime(CLOCK_REALTIME, &finish); //timing end:
     sub_timespec(start, finish, &delta); // timing end:
