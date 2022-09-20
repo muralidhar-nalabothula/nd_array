@@ -133,8 +133,10 @@ void nd_read_sub_? (const char* file_name, const char* var_name, nd_arr_? * nd_a
 ----
 Write data from netCDF.
 ``` c
-void nd_write_? (const char* file_name, const char* var_name, const nd_arr_? * nd_arr_in, char ** dim_names);
+void nd_write_? (const char* file_name, const char* var_name, const nd_arr_? * nd_arr_in, char ** dim_names, size_t * chunk_size);
 ``` 
+If chunk_size is set to NULL, then it is stored as single Contiguous array. Note, for when writing complex array, the size of chunk_size array must be (ndim+1) as there is additional rea/imag dimension.
+
 ----
 Matmul
 > 'N' Normal
