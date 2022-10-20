@@ -1,22 +1,29 @@
 import os
 
 ################################
+tblis = True
 
-CC = 'gcc-11'
-includes = ['-I/Users/murali/softwares/core/include', '-I/opt/homebrew/Cellar/openblas/0.3.20/include'] ## requires netCDF and cblas headers
+CC = 'gcc-12'
+includes = ['-I/Users/murali/softwares/core/include', '-I/opt/homebrew/Cellar/openblas/0.3.21/include'] ## requires netCDF and cblas headers
 libs = ['']
 CFLAGS = ''
 
 ## For gcc you can use below tags
 #CFLAGS = '-O2 -std=c99 -Werror -Wall -Wextra -Wpedantic -Wformat=2 -Wformat-overflow=2 -Wformat-truncation=2 -Wformat-security -Wnull-dereference -Wstack-protector -Wtrampolines -Walloca -Wvla -Warray-bounds=2 -Wimplicit-fallthrough=3 -Wconversion -Wshift-overflow=2 -Wcast-qual -Wstringop-overflow=4  -Warith-conversion -Wlogical-op -Wduplicated-cond -Wduplicated-branches -Wformat-signedness -Wshadow -Wstrict-overflow=4 -Wundef -Wstrict-prototypes -Wswitch-default -Wswitch-enum -Wstack-usage=1000000 -Wcast-align=strict -D_FORTIFY_SOURCE=2 -fstack-protector-strong -fstack-clash-protection '
-CFLAGS = '-O3 -std=c99 -Werror -Wall -Wextra -Wpedantic -Wformat=2 '
+CFLAGS = '-O3 -std=c99  -Wall -Werror  -Wextra -Wpedantic -Wformat=2 -march=native -fopenmp -fopenmp-simd'
 
 
+#includes = ['-I/home/users/mnalabothula/softwares/tblis/library/include', '-I/opt/apps/resif/aion/2020b/epyc/software/OpenBLAS/0.3.12-GCC-10.2.0/include', '-I/opt/apps/resif/aion/2020b/epyc/software/netCDF/4.7.4-gompi-2020b/include' ]
+
+#includes = ['-I/home/users/mnalabothula/softwares/iris_nd_array/include' , '-I/opt/apps/resif/iris/2020b/broadwell/software/imkl/2020.4.304-iimpi-2020b/mkl/include', '-I/opt/apps/resif/iris/2020b/broadwell/software/netCDF/4.7.4-iimpi-2020b/include']
 
 
-
-################################
+#################################
 ### Compiling starts from here
+
+if tblis:
+    CFLAGS +='  -DCOMPILE_ND_TBLIS   '
+    CC     +='  -DCOMPILE_ND_TBLIS   '
 
 INCLUDE = ' '
 LIBS = ' '
@@ -55,6 +62,8 @@ def generate_temp_header():
 
 compile_tag = CC + '  ' +  ' -c -fPIC  ' + '  ' + CFLAGS
 
+asm_tag = CC + '  ' +  ' -S -fPIC  ' + '  ' + CFLAGS
+
 generate_temp_header()
 
 for i in types:
@@ -68,6 +77,7 @@ for i in types:
         ar_tag = ar_tag + ' ' + "nd_%s_%s.o" %(j.strip()[:-2],i)
         print(compile_tag + " " + INCLUDE + " " + " %s -DCOMPILE_ND_%s  -o nd_%s_%s.o " %(j,i,j.strip()[:-2],i))
         os.system(compile_tag + " " + INCLUDE + " " + " %s -DCOMPILE_ND_%s  -o nd_%s_%s.o " %(j,i,j.strip()[:-2],i))
+        os.system(asm_tag + " " + INCLUDE + " " + " %s -DCOMPILE_ND_%s  -o nd_%s_%s.S " %(j,i,j.strip()[:-2],i))
 
 # compile_tag = compile_tag + " " + "-L/opt/homebrew/Cellar/openblas/0.3.20/lib -lopenblas -L/Users/murali/softwares/core/lib -lnetcdf -lm "
 ## '-L/opt/homebrew/Cellar/openblas/0.3.20/lib/libopenblas.a -L/Users/murali/softwares/core/lib/libnetcdf.a -lm

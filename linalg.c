@@ -7,6 +7,8 @@
 #if defined(COMPILE_ND_DOUBLE_COMPLEX) || defined(COMPILE_ND_SINGLE_COMPLEX) || defined(COMPILE_ND_FLOAT) || defined(COMPILE_ND_DOUBLE)
 
 static CBLAS_TRANSPOSE get_gemmn_T(char Trans);
+
+#if defined(COMPILE_ND_TBLIS)
 static void nd_free_tblis(tblis_tensor * A_arr);
 static void FUNCTION(to_tblis, TYPE_S)(const ARRAY_T(TYPE_S) * nd_arr_A, tblis_tensor * A_arr);
 static void FUNCTION(to_tblis_scaled, TYPE_S)(const ARRAY_T(TYPE_S) * nd_arr_A, tblis_tensor * A_arr, const TYPE_L alpha);
@@ -14,6 +16,7 @@ static void check_string_dims(char * str_A, char * str_B, ND_indices * dims_A,  
 static void check_all_indices(char * str_A, char * str_B);
 static void get_einsum_excluded_idxs(const char * str_A, const char* str_B, const char* str_C, char * out_str);
 static void check_str_char_unq(char * inp_str, char* err_msg);
+#endif
 /****************************************************************************************************/
                                 /* BLAS and LAPACK based*/
 
@@ -124,9 +127,40 @@ void FUNCTION(matmul, TYPE_S) (const char TransA, const char TransB, const ARRAY
                 BLAS_POINTER(alpha), (nd_arr_A->data) + idx_A, (BLAS_INT) ldA,  (nd_arr_B->data) + idx_B,  (BLAS_INT) ldB,  BLAS_POINTER(beta), (nd_arr_C->data) + idx_C,  (BLAS_INT) ldC);
 }
 
+
+/** Matmul Expert version.*/
+void FUNCTION(matmulX, TYPE_S) (const char TransA, const char TransB, const TYPE_L * arr_A, const TYPE_L * arr_B, TYPE_L * arr_C, \
+                const TYPE_L alpha, const TYPE_L beta, const ND_indices ldA, const ND_indices ldB, const ND_indices ldC, \
+                const ND_indices m, const ND_indices n, const ND_indices k)
+
+{
+    /* THis will perform the following matrix multiplication. Expert version
+    ----- Simply Calls Gemm function from Cblas  ------ */
+
+    /* Some checks on data*/
+    
+
+    /*Find the max BLAS int to check for overflow of indices */
+    intmax_t max_len_x;
+    ND_indices max_len;
+    
+    for (max_len_x=INTMAX_MAX; (BLAS_INT)max_len_x!=max_len_x; max_len_x/=2);
+    
+    max_len = (ND_indices)max_len_x; 
+
+    // 
+    if ( m >= max_len ||  n >= max_len ||  k >= max_len  ) \
+        error_msg("BLAS indices Overflow. Compile the blas library with higher bit indices!");
+    
+    // Call blas gemm
+
+    BLAS_CALL(gemm , TYPE_S) (CblasRowMajor, get_gemmn_T(TransA), get_gemmn_T(TransB), (BLAS_INT) m , (BLAS_INT) n, (BLAS_INT) k ,\
+                BLAS_POINTER(alpha), arr_A, (BLAS_INT) ldA,  arr_B,  (BLAS_INT) ldB,  BLAS_POINTER(beta), arr_C,  (BLAS_INT) ldC);    
+}
+
 /****************************************************************************************************/
                             /* TBLIS based*/
-
+#if defined(COMPILE_ND_TBLIS)
 /* Sum function*/
 void FUNCTION(sum, TYPE_S) (char * str_A, char * str_C, ARRAY_T(TYPE_S) * nd_arrA, ARRAY_T(TYPE_S) * nd_arrC, const TYPE_L alpha, const TYPE_L beta)
 {
@@ -385,7 +419,7 @@ void FUNCTION(einsum, TYPE_S) (char * einsum_indices, ARRAY_T(TYPE_S) * nd_arrA,
 
 }
 
-
+#endif
 
 /************************************* INTERNAL STATIC HELPER FUNCTIONS ******************************************************/
 
@@ -403,7 +437,7 @@ static CBLAS_TRANSPOSE get_gemmn_T(char Trans)
 }
 
 
-
+#if defined(COMPILE_ND_TBLIS)
 static void check_string_dims(char * str_A, char * str_B, ND_indices * dims_A,  ND_indices * dims_B)
 {   
     /* This Function checks if the string indices are consistant with the dims*/
@@ -620,7 +654,7 @@ static void nd_free_tblis(tblis_tensor * A_arr)
         A_arr->stride = NULL ;
     }
 }
-
+#endif
 
 #endif
 

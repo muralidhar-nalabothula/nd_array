@@ -134,7 +134,16 @@ int main(void)
 
     element = *nd_ele_s(&mat_prod, nd_idx{239,739});
     printf("Matmul element : %10e \n", (double) element);
-    
+
+    float element2 = 0.0f;
+
+    nd_set_all_s(&mat_prod, 0.0f );
+    nd_matmulX_s ('N', 'T', nd_ele_s(&write_arr, nd_idx{0,1,300,0,0}), nd_ele_s(&write_arr, nd_idx{0,2,579,0,0}), mat_prod.data,
+                1.0f , 0.0f, write_arr.dims[4], write_arr.dims[4], mat_prod.dims[1],mat_prod.dims[0], mat_prod.dims[1], write_arr.dims[4]);
+
+    element2 = *nd_ele_s(&mat_prod, nd_idx{239,739});
+    if (element == element2) printf("MatmulX test passed \n");
+
     nd_init_s(&einsum_test,*(write_arr.rank)-2,write_arr.dims);
     nd_malloc_s(&einsum_test);
 

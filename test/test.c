@@ -134,6 +134,16 @@ int main(void)
 
     element = *nd_ele_c(&mat_prod, nd_idx{239,739});
     printf("Matmul element : %10e + %10ej \n", (double) crealf(element),(double) cimagf(element));
+
+    nd_set_all_c(&mat_prod, 0.0f + 0.0f*I);
+
+    nd_matmulX_c ('T', 'C', nd_ele_c(&write_arr, nd_idx{0,1,0,0}), nd_ele_c(&write_arr, nd_idx{0,2,0,0}), mat_prod.data,
+                1.0f , 0.0f, write_arr.dims[3], write_arr.dims[3], mat_prod.dims[1],mat_prod.dims[0], mat_prod.dims[1], write_arr.dims[2]);
+
+    float complex element2 = *nd_ele_c(&mat_prod, nd_idx{239,739});
+
+    if (element == element2) printf("MatmulX test passed \n");
+    else printf("MatmulX test failed \n");
     
     nd_init_c(&einsum_test,*(write_arr.rank)-1,write_arr.dims);
     nd_malloc_c(&einsum_test);
