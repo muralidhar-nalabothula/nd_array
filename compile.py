@@ -71,7 +71,7 @@ for i in types:
     os.system(CC + '  ' +  " -E generate_headers.h -DCOMPILE_ND_%s > nd_%s.h " %(i,i))
     remove_hash("nd_%s.h" %(i))
 
-ar_tag = 'ar rcs lib_nd_array.a'
+ar_tag = 'ar rcs libnd_array.a'
 for i in types:
     for j in compile_c_files:
         ar_tag = ar_tag + ' ' + "nd_%s_%s.o" %(j.strip()[:-2],i)
