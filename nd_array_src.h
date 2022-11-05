@@ -20,7 +20,9 @@
 #include <ctype.h>
 #include <string.h>
 #include <netcdf.h>
-#include <tblis/tblis.h>
+#if defined(COMPILE_ND_TBLIS)
+    #include <tblis/tblis.h>
+#endif
 #include <stdint.h>
 #include "nd_ulit.h"
 //
